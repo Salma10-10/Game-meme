@@ -3,7 +3,13 @@ const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
-    backgroundColor: '#000000', // Set your background color or image
+    backgroundColor: '#87CEEB', // Solid background color (sky blue)
+    physics: {
+        default: 'arcade', // Enable physics
+        arcade: {
+            debug: true // Optional: shows hitboxes for debugging
+        }
+    },
     scene: {
         preload: preload,
         create: create,
@@ -15,16 +21,12 @@ const game = new Phaser.Game(config);
 
 function preload() {
     // Load images into the game
-    this.load.image('player', 'assets/player (1).png');
-    this.load.image('background', 'assets/backgroun.png');
+    this.load.image('player', 'assets/player.png'); // Ensure the player image exists and is named correctly
 }
 
 function create() {
-    // Add background image
-    this.add.image(400, 300, 'background');
-
-    // Add the player sprite
-    this.player = this.physics.add.sprite(400, 500, 'player');
+    // Add the player sprite with physics
+    this.player = this.physics.add.sprite(400, 500, 'player'); // Place the player in the middle-bottom of the screen
 }
 
 function update() {
