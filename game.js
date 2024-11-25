@@ -24,10 +24,13 @@ let player;
 let munitions;
 let stars = [];
 let graphics;
+let shootSound; // Variable for the shooting sound
 
 function preload() {
+    // Load assets
     this.load.image('player', 'assets/player.png'); // Load player sprite
     this.load.image('munition', 'assets/munition.png'); // Load munition sprite
+    this.load.audio('shoot', 'assets/sounds/shoot.mp3'); // Load shooting sound
 }
 
 function create() {
@@ -39,7 +42,7 @@ function create() {
     // Create a group for munitions
     munitions = this.physics.add.group();
 
-    // Add input keys
+    // Add input keys for movement
     cursors = this.input.keyboard.createCursorKeys();
     this.shootKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
@@ -53,6 +56,9 @@ function create() {
         const size = Phaser.Math.Between(1, 3); // Random star size
         stars.push({ x, y, size }); // Store star data
     }
+
+    // Preload shooting sound
+    shootSound = this.sound.add('shoot'); // Load the sound into the game
 }
 
 function update() {
@@ -96,10 +102,12 @@ function update() {
     if (Phaser.Input.Keyboard.JustDown(this.shootKey)) {
         shootMunition();
     }
-
 }
 
 function shootMunition() {
+    // Play the shooting sound
+    shootSound.play(); // Play the sound
+
     // Create a munition just above the player
     const munition = munitions.create(player.x, player.y - 20, 'munition');
     munition.setScale(0.3); // Scale down the munition
@@ -110,5 +118,4 @@ function shootMunition() {
 
     // Destroy the munition when it goes off-screen
     munition.on('worldbounds', () => munition.destroy());
-
 }
