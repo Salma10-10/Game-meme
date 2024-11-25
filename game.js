@@ -2,8 +2,8 @@
 const config = {
     type: Phaser.AUTO,
     width: 800,
-    height: 590,
-    backgroundColor: '#87CEEB', // Black background for space effect
+    height: 600,
+    backgroundColor: '#87CEEB', // Light blue background
     physics: {
         default: 'arcade',
         arcade: {
@@ -19,37 +19,40 @@ const config = {
 
 const game = new Phaser.Game(config);
 
-let stars = []; // Array to store star data
-let graphics; // Graphics object for drawing
+let cursors;
+let player;
+let munitions;
+let stars = [];
+let graphics;
 
 function preload() {
-    // Load player sprite
-    this.load.image('player', 'assets/player.png');
+    this.load.image('player', 'assets/player.png'); // Load player sprite
+    this.load.image('munition', 'assets/munition.png'); // Load munition sprite
 }
 
 function create() {
-    // Add the player sprite
-    this.player = this.physics.add.sprite(400, 500, 'player');
-    this.player.setScale(0.8);
+    // Add player sprite
+    player = this.physics.add.sprite(400, 500, 'player');
+    player.setScale(0.8);
+    player.setCollideWorldBounds(true); // Prevent player from leaving screen
 
-    // Create a graphics object
+    // Create a group for munitions
+    munitions = this.physics.add.group();
+
+    // Add input keys
+    cursors = this.input.keyboard.createCursorKeys();
+    this.shootKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+    // Create a graphics object for stars
     graphics = this.add.graphics();
 
     // Generate stars
     for (let i = 0; i < 200; i++) {
-        let x = Phaser.Math.Between(0, 800); // Random x position
-        let y = Phaser.Math.Between(0, 600); // Random y position
-        let size = Phaser.Math.Between(1, 3); // Random star size
-        stars.push({ x, y, size }); // Store star data in the array
+        const x = Phaser.Math.Between(0, 800); // Random x position
+        const y = Phaser.Math.Between(0, 600); // Random y position
+        const size = Phaser.Math.Between(1, 3); // Random star size
+        stars.push({ x, y, size }); // Store star data
     }
-    // Prevent the player from moving out of the screen
-    this.player.setCollideWorldBounds(true);
-
-    // Create cursors for movement
-    cursors = this.input.keyboard.createCursorKeys();
-
-
-
 }
 
 function update() {
@@ -57,13 +60,13 @@ function update() {
     graphics.clear();
 
     // Set the color for the stars
-    graphics.fillStyle(0xffffff, 1); // Purple color
+    graphics.fillStyle(0xffffff, 1);
 
     // Move and redraw stars
     for (let star of stars) {
-        star.y += 2; // Move star downward
+        star.y += 2; // Move stars downward
 
-        // Reset position to top if it moves off the bottom
+        // Reset position if stars move off the screen
         if (star.y > 600) {
             star.y = 0;
             star.x = Phaser.Math.Between(0, 800);
@@ -73,18 +76,39 @@ function update() {
         graphics.fillCircle(star.x, star.y, star.size);
     }
 
-    // Reset velocity (stop movement when no key is pressed)
-    this.player.setVelocity(0);
-    // Move based on arrow keys
+    // Reset player velocity
+    player.setVelocity(0);
+
+    // Player movement
     if (cursors.left.isDown) {
-        this.player.setVelocityX(-200); // Move left
+        player.setVelocityX(-300);
     } else if (cursors.right.isDown) {
-        this.player.setVelocityX(200); // Move right
+        player.setVelocityX(300);
     }
+
     if (cursors.up.isDown) {
-        this.player.setVelocityY(-200); // Move up
+        player.setVelocityY(-300);
     } else if (cursors.down.isDown) {
-        this.player.setVelocityY(200); // Move down
+        player.setVelocityY(300);
     }
+
+    // Shooting
+    if (Phaser.Input.Keyboard.JustDown(this.shootKey)) {
+        shootMunition();
+    }
+
+}
+
+function shootMunition() {
+    // Create a munition just above the player
+    const munition = munitions.create(player.x, player.y - 20, 'munition');
+    munition.setScale(0.3); // Scale down the munition
+    munition.setVelocityY(-400); // Move upward
+    munition.body.allowGravity = false; // Prevent gravity effects
+    munition.setCollideWorldBounds(true); // Enable world bounds collision
+    munition.body.onWorldBounds = true; // Enable event for world bounds
+
+    // Destroy the munition when it goes off-screen
+    munition.on('worldbounds', () => munition.destroy());
 
 }
