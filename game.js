@@ -25,12 +25,14 @@ let munitions;
 let stars = [];
 let graphics;
 let shootSound; // Variable for the shooting sound
+let enemies;
 
 function preload() {
     // Load assets
     this.load.image('player', 'assets/player.png'); // Load player sprite
     this.load.image('munition', 'assets/munition.png'); // Load munition sprite
     this.load.audio('shoot', 'assets/sounds/shoot.mp3'); // Load shooting sound
+    this.load.image('enemy', 'assets/enemy.png'); // Load enemy sprite
 }
 
 function create() {
@@ -38,6 +40,7 @@ function create() {
     player = this.physics.add.sprite(400, 500, 'player');
     player.setScale(0.8);
     player.setCollideWorldBounds(true); // Prevent player from leaving screen
+    enemies = this.physics.add.group(); // Add enemies group
 
     // Create a group for munitions
     munitions = this.physics.add.group();
@@ -59,6 +62,17 @@ function create() {
 
     // Preload shooting sound
     shootSound = this.sound.add('shoot'); // Load the sound into the game
+
+    // Spawn enemies periodically
+    this.time.addEvent({
+        delay: 1000, // Spawn every 1 second
+        callback: spawnEnemy,
+        callbackScope: this,
+        loop: true,
+    });
+
+    // Handle collisions between munition and enemies
+    this.physics.add.collider(munitions, enemies, destroyEnemy, null, this);
 }
 
 function update() {
@@ -102,6 +116,11 @@ function update() {
     if (Phaser.Input.Keyboard.JustDown(this.shootKey)) {
         shootMunition();
     }
+
+    // Make enemies move toward the player
+    enemies.children.iterate(function (enemy) {
+        moveEnemyTowardsPlayer(enemy);
+    });
 }
 
 function shootMunition() {
@@ -118,4 +137,30 @@ function shootMunition() {
 
     // Destroy the munition when it goes off-screen
     munition.on('worldbounds', () => munition.destroy());
+}
+
+// Function to spawn enemies
+function spawnEnemy() {
+    let x = Phaser.Math.Between(50, 750); // Random X position within screen bounds
+    let enemy = enemies.create(x, 0, 'enemy'); // Spawn at the top
+    enemy.setScale(0.8);
+    enemy.setCollideWorldBounds(true); // Enable world bounds collision
+    enemy.body.allowGravity = false; // Prevent gravity effects
+}
+
+// Function to make an enemy move toward the player
+function moveEnemyTowardsPlayer(enemy) {
+    if (!enemy.active) return; // Skip if the enemy is not active
+    const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, player.x, player.y); // Calculate angle
+    const speed = 100; // Set speed
+    const velocityX = Math.cos(angle) * speed;
+    const velocityY = Math.sin(angle) * speed;
+    enemy.setVelocity(velocityX, velocityY); // Set velocity toward the player
+}
+
+// Function to destroy an enemy when hit by a munition
+function destroyEnemy(munition, enemy) {
+    enemy.destroy(); // Remove enemy
+    munition.destroy(); // Remove munition
+    console.log('Enemy destroyed!');
 }
